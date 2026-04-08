@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AttendX — Student Attendance System</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1e2530;
+    --border: #2a3441;
+    --accent: #00d4aa;
+    --accent2: #7c6af7;
+    --danger: #ff5c5c;
+    --warn: #ffb347;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 20% 50%, #0d2e26 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, #1a1040 0%, transparent 60%),
+                var(--bg);
+  }
+  .login-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 40px; width: 380px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  }
+  .login-logo { display:flex; align-items:center; gap:10px; margin-bottom:28px; }
+  .login-logo .dot { width:32px; height:32px; background:var(--accent); border-radius:8px;
+    display:grid; place-items:center; font-weight:700; color:#000; font-size:14px; }
+  .login-logo span { font-size:22px; font-weight:700; letter-spacing:-0.5px; }
+  .login-logo span em { color:var(--accent); font-style:normal; }
+  .login-card h2 { font-size:15px; color:var(--muted); font-weight:400; margin-bottom:28px; }
+  .field { margin-bottom:16px; }
+  .field label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:6px; }
+  .field input, .field select {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    color:var(--text); border-radius:8px; padding:10px 14px; font-family:inherit; font-size:14px;
+    outline:none; transition:border .2s;
+  }
+  .field input:focus, .field select:focus { border-color:var(--accent); }
+  .field select option { background:var(--surface2); }
+  .btn {
+    display:inline-flex; align-items:center; gap:6px; padding:10px 18px;
+    border-radius:8px; font-family:inherit; font-size:14px; font-weight:500;
+    cursor:pointer; border:none; transition:all .15s;
+  }
+  .btn-primary { background:var(--accent); color:#000; width:100%; justify-content:center; font-size:15px; padding:12px; }
+  .btn-primary:hover { background:#00bfa0; }
+  .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-danger { background:#ff5c5c22; border:1px solid #ff5c5c44; color:var(--danger); }
+  .btn-danger:hover { background:#ff5c5c33; }
+  .btn-sm { padding:6px 12px; font-size:12px; }
+  .demo-hint { margin-top:18px; background:var(--surface2); border-radius:8px; padding:12px; }
+  .demo-hint p { font-size:11px; color:var(--muted); margin-bottom:6px; }
+  .demo-hint code { font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--accent); }
+
+  /* ── APP SHELL ── */
+  #app { display:none; min-height:100vh; }
+  .shell { display:flex; min-height:100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width:220px; background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100;
+    transition:transform .3s;
+  }
+  .sidebar-brand { padding:20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .sidebar-brand .dot { width:28px; height:28px; background:var(--accent); border-radius:6px;
+    display:grid; place-items:center; font-weight:700; color:#000; font-size:12px; flex-shrink:0; }
+  .sidebar-brand span { font-size:16px; font-weight:700; }
+  .sidebar-brand span em { color:var(--accent); font-style:normal; }
+  .sidebar-user { padding:14px 16px; border-bottom:1px solid var(--border); }
+  .sidebar-user .role-badge { font-size:10px; text-transform:uppercase; letter-spacing:.08em; padding:2px 8px;
+    border-radius:20px; font-weight:600; }
+  .role-admin { background:#7c6af733; color:var(--accent2); }
+  .role-teacher { background:#00d4aa22; color:var(--accent); }
+  .role-student { background:#ffb34722; color:var(--warn); }
+  .sidebar-user .name { font-size:13px; font-weight:600; margin-top:6px; }
+  nav { flex:1; padding:10px 8px; overflow-y:auto; }
+  .nav-item {
+    display:flex; align-items:center; gap:10px; padding:9px 12px;
+    border-radius:8px; cursor:pointer; font-size:13px; color:var(--muted);
+    transition:all .15s; margin-bottom:2px;
+  }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:var(--accent)18; color:var(--accent); }
+  .nav-item .icon { width:18px; text-align:center; font-size:16px; }
+  .nav-section { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+    padding:10px 12px 4px; margin-top:4px; }
+  .sidebar-footer { padding:14px; border-top:1px solid var(--border); }
+  .logout-btn { display:flex; align-items:center; gap:8px; padding:9px 12px;
+    border-radius:8px; cursor:pointer; font-size:13px; color:var(--muted); transition:all .15s; }
+  .logout-btn:hover { background:#ff5c5c18; color:var(--danger); }
+
+  /* ── MAIN CONTENT ── */
+  .main { margin-left:220px; flex:1; padding:28px; }
+  .page { display:none; }
+  .page.active { display:block; }
+  .page-header { margin-bottom:24px; }
+  .page-header h1 { font-size:22px; font-weight:700; letter-spacing:-0.3px; }
+  .page-header p { color:var(--muted); font-size:13px; margin-top:4px; }
+
+  /* ── STAT CARDS ── */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px; }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px; position:relative; overflow:hidden;
+  }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .stat-card.green::before { background:var(--accent); }
+  .stat-card.purple::before { background:var(--accent2); }
+  .stat-card.orange::before { background:var(--warn); }
+  .stat-card.red::before { background:var(--danger); }
+  .stat-card .label { font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:8px; }
+  .stat-card .value { font-size:32px; font-weight:700; font-family:'JetBrains Mono',monospace; line-height:1; }
+  .stat-card .sub { font-size:12px; color:var(--muted); margin-top:6px; }
+
+  /* ── TABLE ── */
+  .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .table-toolbar { padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--border); gap:10px; flex-wrap:wrap; }
+  .table-toolbar h3 { font-size:14px; font-weight:600; }
+  .search-box { display:flex; align-items:center; gap:8px; background:var(--surface2);
+    border:1px solid var(--border); border-radius:8px; padding:7px 12px; min-width:200px; }
+  .search-box input { background:transparent; border:none; outline:none; color:var(--text); font-size:13px; font-family:inherit; flex:1; }
+  .search-box span { color:var(--muted); font-size:14px; }
+  table { width:100%; border-collapse:collapse; }
+  th { padding:10px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--muted); text-align:left; border-bottom:1px solid var(--border); background:var(--surface2); }
+  td { padding:12px 16px; font-size:13px; border-bottom:1px solid var(--border)88; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:var(--surface2); }
+  .badge { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:500; display:inline-block; }
+  .badge-present { background:#00d4aa22; color:var(--accent); }
+  .badge-absent { background:#ff5c5c22; color:var(--danger); }
+  .badge-class { background:var(--surface2); border:1px solid var(--border); color:var(--muted); }
+
+  /* ── ATTENDANCE GRID ── */
+  .att-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-top:16px; }
+  .att-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px; display:flex; align-items:center; gap:14px;
+  }
+  .att-avatar { width:40px; height:40px; border-radius:50%; display:grid; place-items:center;
+    font-weight:700; font-size:15px; flex-shrink:0; }
+  .att-card .info { flex:1; min-width:0; }
+  .att-card .sname { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .att-card .roll { font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .att-toggle { display:flex; border-radius:6px; overflow:hidden; border:1px solid var(--border); flex-shrink:0; }
+  .att-toggle button { padding:5px 10px; background:transparent; border:none; cursor:pointer;
+    font-size:11px; font-weight:600; font-family:inherit; color:var(--muted); transition:all .15s; }
+  .att-toggle button.present-on { background:#00d4aa22; color:var(--accent); }
+  .att-toggle button.absent-on { background:#ff5c5c22; color:var(--danger); }
+
+  /* ── FORM ── */
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:#00000088; z-index:200;
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:28px; width:460px; max-width:90vw; }
+  .modal h3 { font-size:16px; font-weight:700; margin-bottom:20px; }
+  .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+  /* ── REPORTS ── */
+  .report-header { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px; }
+  .progress-bar { height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; margin-top:4px; }
+  .progress-fill { height:100%; border-radius:3px; background:var(--accent); transition:width .4s; }
+  .progress-fill.warn { background:var(--warn); }
+  .progress-fill.danger { background:var(--danger); }
+
+  /* ── TOAST ── */
+  #toast { position:fixed; bottom:24px; right:24px; background:var(--surface);
+    border:1px solid var(--border); border-radius:10px; padding:12px 18px;
+    font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.4); transform:translateY(80px);
+    opacity:0; transition:all .3s; z-index:999; max-width:300px; }
+  #toast.show { transform:translateY(0); opacity:1; }
+  #toast.success { border-color:var(--accent); }
+  #toast.error { border-color:var(--danger); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:700px){
+    .sidebar { transform:translateX(-100%); }
+    .main { margin-left:0; padding:16px; }
+    .form-grid { grid-template-columns:1fr; }
+    .stats-grid { grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="dot">A</div>
+      <span>Attend<em>X</em></span>
+    </div>
+    <h2>Sign in to your account</h2>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="Enter username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Enter password"/>
+    </div>
+    <div class="field">
+      <label>Role</label>
+      <select id="login-role">
+        <option value="admin">Administrator</option>
+        <option value="teacher">Teacher</option>
+        <option value="student">Student</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Sign In →</button>
+    <div class="demo-hint">
+      <p>Demo credentials (any password works):</p>
+      <code>admin / teacher / student</code>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="dot">A</div>
+        <span>Attend<em>X</em></span>
+      </div>
+      <div class="sidebar-user">
+        <span class="role-badge" id="sb-role-badge">Admin</span>
+        <div class="name" id="sb-name">John Admin</div>
+      </div>
+      <nav id="sidebar-nav"></nav>
+      <div class="sidebar-footer">
+        <div class="logout-btn" onclick="doLogout()">⬡ &nbsp; Sign out</div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <!-- DASHBOARD -->
+      <div class="page" id="page-dashboard">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+          <p id="dash-subtitle">Welcome back. Here's what's happening today.</p>
+        </div>
+        <div class="stats-grid" id="dash-stats"></div>
+        <div class="table-wrap">
+          <div class="table-toolbar"><h3>Recent Attendance Activity</h3></div>
+          <table>
+            <thead><tr><th>Student</th><th>Class</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody id="recent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STUDENTS -->
+      <div class="page" id="page-students">
+        <div class="page-header">
+          <h1>Student Management</h1>
+          <p>Add, edit, or remove students from the system.</p>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <h3>All Students</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <div class="search-box">
+                <span>🔍</span>
+                <input type="text" placeholder="Search students…" oninput="filterStudents(this.value)"/>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="openStudentModal()">+ Add Student</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Roll No.</th><th>Class</th><th>Section</th><th>Actions</th></tr></thead>
+            <tbody id="students-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TEACHERS -->
+      <div class="page" id="page-teachers">
+        <div class="page-header">
+          <h1>Teacher Management</h1>
+          <p>Manage teacher accounts and class assignments.</p>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <h3>All Teachers</h3>
+            <button class="btn btn-primary btn-sm" onclick="openTeacherModal()">+ Add Teacher</button>
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Subject</th><th>Email</th><th>Class</th><th>Actions</th></tr></thead>
+            <tbody id="teachers-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MARK ATTENDANCE -->
+      <div class="page" id="page-attendance">
+        <div class="page-header">
+          <h1>Mark Attendance</h1>
+          <p>Select a class and date, then mark each student.</p>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-end;">
+          <div class="field" style="margin:0;min-width:140px;">
+            <label>Class</label>
+            <select id="att-class" onchange="loadAttendance()">
+              <option>10-A</option><option>10-B</option><option>9-A</option><option>9-B</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;min-width:140px;">
+            <label>Date</label>
+            <input type="date" id="att-date" onchange="loadAttendance()"/>
+          </div>
+          <button class="btn btn-primary" onclick="saveAttendance()">💾 Save Attendance</button>
+        </div>
+        <div class="att-grid" id="att-grid"></div>
+      </div>
+
+      <!-- VIEW ATTENDANCE -->
+      <div class="page" id="page-view-attendance">
+        <div class="page-header">
+          <h1>Attendance Records</h1>
+          <p>Search and view attendance history.</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+          <div class="search-box" style="flex:1;min-width:160px;">
+            <span>🔍</span>
+            <input type="text" placeholder="Search by name or roll no…" oninput="filterAttRec(this.value)" id="att-search"/>
+          </div>
+          <div class="field" style="margin:0;">
+            <select id="att-filter-class" onchange="filterAttRec('')" style="height:38px;padding:8px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:13px;">
+              <option value="">All Classes</option>
+              <option>10-A</option><option>10-B</option><option>9-A</option><option>9-B</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Student</th><th>Roll No.</th><th>Class</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody id="att-records-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="page" id="page-reports">
+        <div class="page-header">
+          <h1>Attendance Reports</h1>
+          <p>Monthly student-wise summary.</p>
+        </div>
+        <div class="report-header">
+          <div class="field" style="margin:0;">
+            <label>Month</label>
+            <input type="month" id="rep-month" style="height:38px;padding:8px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:13px;" onchange="renderReport()"/>
+          </div>
+          <div class="field" style="margin:0;">
+            <select id="rep-class" onchange="renderReport()" style="height:38px;padding:8px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:13px;">
+              <option value="">All Classes</option>
+              <option>10-A</option><option>10-B</option><option>9-A</option><option>9-B</option>
+            </select>
+          </div>
+          <button class="btn btn-ghost" onclick="toast('PDF export coming soon!','success')">⬇ Export PDF</button>
+          <button class="btn btn-ghost" onclick="toast('Excel export coming soon!','success')">⬇ Export Excel</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Student</th><th>Class</th><th>Working Days</th><th>Present</th><th>Absent</th><th>Attendance %</th></tr></thead>
+            <tbody id="report-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MY ATTENDANCE (student) -->
+      <div class="page" id="page-my-attendance">
+        <div class="page-header">
+          <h1>My Attendance</h1>
+          <p>Your personal attendance record.</p>
+        </div>
+        <div class="stats-grid" id="my-stats"></div>
+        <div class="table-wrap" style="margin-top:0;">
+          <table>
+            <thead><tr><th>Date</th><th>Class</th><th>Status</th></tr></thead>
+            <tbody id="my-att-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL: Add Student -->
+<div class="modal-overlay" id="student-modal">
+  <div class="modal">
+    <h3 id="student-modal-title">Add Student</h3>
+    <div class="form-grid">
+      <div class="field"><label>Full Name</label><input type="text" id="s-name" placeholder="e.g. Priya Sharma"/></div>
+      <div class="field"><label>Roll Number</label><input type="text" id="s-roll" placeholder="e.g. 2024001"/></div>
+      <div class="field"><label>Class</label>
+        <select id="s-class"><option>10-A</option>
